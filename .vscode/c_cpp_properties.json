@@ -6,6 +6,7 @@
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/external/nanobind/include",
                 "${workspaceFolder}/external/dlpack/include",
+                "${workspaceFolder}/external/pybind11/include",
                 "/usr/include/python3.10"
             ],
             "compilerPath": "/usr/bin/gcc",

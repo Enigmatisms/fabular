@@ -6,10 +6,16 @@
 
 namespace fab {
 
-void TensorProcessor::process(const DLManagedTensor* tensor) {
+void TensorProcessor::print(const DLManagedTensor* tensor) {
     const DLTensor* dlt = &tensor->dl_tensor;
     print_tensor_info(dlt);
     print_first_elements(dlt);
+}
+
+int TensorProcessor::process(const DLManagedTensor* tensor) {
+    // Currently: a very simple function, just used for testing speed
+    const DLTensor* dlt = &tensor->dl_tensor;
+    return dlt->ndim;
 }
 
 void TensorProcessor::print_tensor_info(const DLTensor* dlt) {
@@ -91,7 +97,7 @@ void TensorProcessor::print_first_elements(const DLTensor* dlt) {
         printf("First %zu elements (GPU): ", elements_to_print);
         print_elements(host_buffer.data(), dlt->dtype, elements_to_print);
     } 
-    else if (dlt->device.device_type == kDLCPU) {
+    else if (dlt->device.device_type == kDLCPU || dlt->device.device_type == kDLCUDAManaged) {
         printf("First %zu elements (CPU): ", elements_to_print);
         print_elements(dlt->data, dlt->dtype, elements_to_print);
     }

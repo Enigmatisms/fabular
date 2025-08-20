@@ -11,7 +11,12 @@ except ImportError:
 
 sys.path.append("../build")
 
-import fabular as fbl
+USE_PYBIND11 = False
+
+if USE_PYBIND11:
+    import fabular_py11 as fbl
+else:
+    import fabular as fbl
 
 def test_torch():
     print("=== Testing PyTorch Tensor ===")
@@ -24,9 +29,9 @@ def test_torch():
     dl_cuda = cuda_tensor.__dlpack__()
     dl_int = int_tensor.__dlpack__()
     
-    fbl.process_dlpack(dl_cpu)
-    fbl.process_dlpack(dl_cuda)
-    fbl.process_dlpack(dl_int)
+    fbl.print_dlpack(dl_cpu)
+    fbl.print_dlpack(dl_cuda)
+    fbl.print_dlpack(dl_int)
 
 def test_paddle():
     if not has_paddle:
@@ -43,9 +48,9 @@ def test_paddle():
     dl_cuda = paddle.utils.dlpack.to_dlpack(cuda_tensor)
     dl_int = paddle.utils.dlpack.to_dlpack(int_tensor)
     
-    fbl.process_dlpack(dl_cpu)
-    fbl.process_dlpack(dl_cuda)
-    fbl.process_dlpack(dl_int)
+    fbl.print_dlpack(dl_cpu)
+    fbl.print_dlpack(dl_cuda)
+    fbl.print_dlpack(dl_int)
 
 def test_numpy():
     print("\n=== Testing NumPy Array via PyTorch ===")
@@ -55,7 +60,7 @@ def test_numpy():
     torch_tensor = torch.from_numpy(np_array)
     dl_np = torch_tensor.__dlpack__()
     
-    fbl.process_dlpack(dl_np)
+    fbl.print_dlpack(dl_np)
 
 if __name__ == "__main__":
     print("Testing torch")

@@ -19,12 +19,14 @@ endif()
 
 add_subdirectory(external/nanobind)
 add_subdirectory(external/dlpack)
+add_subdirectory(external/pybind11)
 set(dlpack_INCLUDE_DIR external/dlpack/include)
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${Python_INCLUDE_DIRS}
     ${nanobind_INCLUDE_DIR}
+    ${pybind11_INCLUDE_DIR}
     ${dlpack_INCLUDE_DIR}
 )
 
@@ -38,6 +40,13 @@ set(SOURCES
 
 nanobind_add_module(${MODULE_NAME} ${SOURCES})
 
+set(PYBIND_SOURCES
+    src/unified_tensor.cu
+    src/bindings_py11.cc
+)
+
+pybind11_add_module(${MODULE_NAME}_py11 ${PYBIND_SOURCES})
+
 if(MSVC)
     set(MODULE_SUFFIX ".pyd")
 else()
@@ -46,6 +55,13 @@ endif()
 
 set_target_properties(${MODULE_NAME} PROPERTIES
     OUTPUT_NAME ${MODULE_NAME}
+    PREFIX ""
+    SUFFIX ${MODULE_SUFFIX}
+    CUDA_RESOLVE_DEVICE_SYMBOLS ON
+)
+
+set_target_properties(${MODULE_NAME}_py11 PROPERTIES
+    OUTPUT_NAME ${MODULE_NAME}_py11
     PREFIX ""
     SUFFIX ${MODULE_SUFFIX}
     CUDA_RESOLVE_DEVICE_SYMBOLS ON
