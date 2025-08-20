@@ -9,6 +9,20 @@ find_package(Python REQUIRED COMPONENTS Development.Module Interpreter)
 message(STATUS "Python include dir: ${Python_INCLUDE_DIRS}")
 message(STATUS "Python executable: ${Python_EXECUTABLE}")
 
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug"
+    OR "${CMAKE_BUILD_TYPE}" STREQUAL "debug"
+    OR "${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
+    set(CMAKE_BUILD_TYPE Debug)
+    set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -O0 -g")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
+    message(STATUS "Build Type: Debug")
+else()
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+    set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS_RELEASE} -O2")
+    message(STATUS "Build Type: Release")
+endif()
+
 if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/nanobind/CMakeLists.txt")
     find_package(Git REQUIRED)
     execute_process(
