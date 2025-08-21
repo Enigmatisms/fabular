@@ -49,6 +49,7 @@ message(STATUS ${dlpack_INCLUDE_DIR})
 set(MODULE_NAME fabular)
 set(SOURCES 
     src/unified_tensor.cu
+    src/put_along_axis.cu
     src/bindings.cc
 )
 
@@ -56,6 +57,7 @@ nanobind_add_module(${MODULE_NAME} ${SOURCES})
 
 set(PYBIND_SOURCES
     src/unified_tensor.cu
+    src/put_along_axis.cu
     src/bindings_py11.cc
 )
 

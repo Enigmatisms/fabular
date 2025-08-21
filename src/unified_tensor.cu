@@ -36,6 +36,13 @@ void TensorProcessor::print_tensor_info(const DLTensor* dlt) {
         if (i < dlt->ndim - 1) printf(", ");
     }
     printf("]\n");
+
+    printf("Strides: %d [", dlt->ndim);
+    for (int i = 0; i < dlt->ndim; ++i) {
+        printf("%lld", (long long)dlt->strides[i]);
+        if (i < dlt->ndim - 1) printf(", ");
+    }
+    printf("]\n");
     
     std::string dtype_str;
     if (dlt->dtype.code == kDLFloat) {

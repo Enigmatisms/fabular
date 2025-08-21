@@ -42,15 +42,18 @@ def test_paddle():
     
     cpu_tensor = paddle.to_tensor([5.0, 4.0, 3.0, 2.0, 1.0])
     cuda_tensor = paddle.to_tensor([[5.5, 4.4], [3.3, 2.2]], place=paddle.CUDAPlace(0))
+    cuda_tensor2 = paddle.randn([2, 3, 4, 5])
     int_tensor = paddle.randint(0, 10, (5,), dtype="int64")
     
     dl_cpu = paddle.utils.dlpack.to_dlpack(cpu_tensor)
     dl_cuda = paddle.utils.dlpack.to_dlpack(cuda_tensor)
+    dl_cuda2 = paddle.utils.dlpack.to_dlpack(cuda_tensor2)
     dl_int = paddle.utils.dlpack.to_dlpack(int_tensor)
     
-    fbl.print_dlpack(dl_cpu)
-    fbl.print_dlpack(dl_cuda)
-    fbl.print_dlpack(dl_int)
+    # fbl.print_dlpack(dl_cpu)
+    # fbl.print_dlpack(dl_cuda)
+    fbl.print_dlpack(dl_cuda2)
+    # fbl.print_dlpack(dl_int)
 
 def test_numpy():
     print("\n=== Testing NumPy Array via PyTorch ===")
