@@ -57,8 +57,8 @@ __global__ void ScatterKernel(
 ) {
     extern __shared__ int64_t smem_desc[];
     if (threadIdx.x < (2 * ndim)) {
-        *(reinterpret_cast<int64_t*>(&smem_desc) + threadIdx.x) = 
-        *(reinterpret_cast<const int64_t*>(desc) + threadIdx.x);
+        *(smem_desc + threadIdx.x) = 
+        *(desc + threadIdx.x);
     }
     const int64_t thread_num = gridDim.x * blockDim.x;
     __syncthreads();
