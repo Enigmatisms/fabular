@@ -46,19 +46,18 @@ include_directories(
 
 message(STATUS ${dlpack_INCLUDE_DIR})
 
+aux_source_directory(./src FAB_SRC)
 set(MODULE_NAME fabular)
 set(SOURCES 
-    src/unified_tensor.cu
-    src/put_along_axis.cu
-    src/bindings.cc
+    ${FAB_SRC}
+    bindings/bindings.cc
 )
 
 nanobind_add_module(${MODULE_NAME} ${SOURCES})
 
 set(PYBIND_SOURCES
-    src/unified_tensor.cu
-    src/put_along_axis.cu
-    src/bindings_py11.cc
+    ${FAB_SRC}
+    bindings/bindings_py11.cc
 )
 
 pybind11_add_module(${MODULE_NAME}_py11 ${PYBIND_SOURCES})

@@ -30,6 +30,17 @@ void put_along_axis(nb::capsule inout_cap, nb::capsule indices_cap, int dim) {
     );
 }
 
+void atomic_assign(const nb::capsule& src, nb::capsule& dst) {
+    const DLManagedTensor* managed_src = static_cast<const DLManagedTensor*>(src.data());
+    DLManagedTensor* managed_dst = static_cast<DLManagedTensor*>(dst.data());
+    
+    fab::TensorProcessor processor;
+    return processor.assign_reduce(
+        managed_src, 
+        managed_dst
+    );
+}
+
 NB_MODULE(fabular, m) {
     m.doc() = "DLPack unified tensor processing with nanobind";
 
@@ -41,6 +52,9 @@ NB_MODULE(fabular, m) {
 
     m.def("put_along_axis", &put_along_axis, 
           "Put along axis minimalist implementation for testing");
+
+    m.def("atomic_assign", &atomic_assign, 
+          "Assign atomic primitives testing API");
     
     m.attr("kDLCPU") = nb::int_(static_cast<int>(kDLCPU));
     m.attr("kDLCUDA") = nb::int_(static_cast<int>(kDLCUDA));

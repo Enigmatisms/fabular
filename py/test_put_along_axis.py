@@ -5,17 +5,7 @@ import fabular as fbl
 import numpy as np
 import torch
 import paddle
-
-def try_test(actual_np: np.ndarray, gt_np: np.ndarray, actual_name: str):
-    try:
-        np.testing.assert_allclose(actual_np, gt_np)
-    except AssertionError as ex_msg:
-        print(f"{actual_name} put_along_axis differs from PyTorch!")
-        print(f"{actual_name}:")
-        print(actual_np)
-        print("PyTorch:")
-        print(gt_np)
-        print(ex_msg)
+from test_utils import try_test
 
 def make_case_and_test(input_shape, index_shape, dim, indices_range, value_to_set = 6):
     inout_tensor = torch.zeros(*input_shape, dtype=torch.float32).cuda()
@@ -37,7 +27,6 @@ def make_case_and_test(input_shape, index_shape, dim, indices_range, value_to_se
 
 if __name__ == "__main__":
     torch.manual_seed(114514)
-    inout_tensor = torch.zeros(2, 3, 4, 5).cuda()
 
     print("Case 1:")
     make_case_and_test((2, 3, 4, 5), (2, 2, 4, 5), dim = 2, indices_range = 3)

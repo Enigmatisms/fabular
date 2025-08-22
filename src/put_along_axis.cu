@@ -83,8 +83,8 @@ void TensorProcessor::put_along_axis(DLManagedTensor* inout_m, const DLManagedTe
 
     int64_t numel_inds = indices.strides[0] * indices.shape[0];
 
-   thrust::host_vector<int64_t> host_vec(indices.ndim * 2);
-   thrust::device_vector<int64_t> devc_vec(indices.ndim * 2);
+    thrust::host_vector<int64_t> host_vec(indices.ndim * 2);
+    thrust::device_vector<int64_t> devc_vec(indices.ndim * 2);
 
     for (int i = 0; i < indices.ndim; i++) {
         host_vec[i] = indices.shape[i];
@@ -113,9 +113,10 @@ void TensorProcessor::put_along_axis(DLManagedTensor* inout_m, const DLManagedTe
     } else if (inout.dtype.code == kDLInt) {
         LAUNCH_SCATTER_KERNEL(int);
     } else {
-        THROW_IN_HOST("Unsupported data type.");
+        THROW_IN_HOST("Unsupported data type.\n");
     }
 #undef LAUNCH_SCATTER_KERNEL
+    CUDA_CHECK_RETURN(cudaDeviceSynchronize());
 }
 
 
