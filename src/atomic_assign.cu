@@ -97,9 +97,9 @@ void TensorProcessor::assign_reduce(const DLManagedTensor* _src, DLManagedTensor
     constexpr int64_t max_thread_num = 2147483647;      // INT_MAX, actually, this should be device-aware
     int64_t block_num = std::min(max_thread_num, src_numel + thread_num - 1) / thread_num;
     
-#define LAUNCH_ATOMIC_KERNEL(dtype)                        \
+#define LAUNCH_ATOMIC_KERNEL(dtype)                         \
     TensorAtomicCopy<dtype><<< block_num, thread_num>>>(    \
-        static_cast<dtype*>(src.data),                      \
+        static_cast<const dtype*>(src.data),                \
         static_cast<dtype*>(inout.data),                    \
         reduce_size                                         \
     )
