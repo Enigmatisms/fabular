@@ -47,7 +47,7 @@ __device__ __inline__ T atomicAssign(T* address, T val) {
         return atomicExch(address, val);
     } else if constexpr (sizeof(T) == 8) {
         auto* dest_address = reinterpret_cast<unsigned long long*>(address);
-        unsigned long long value_to_store = *reinterpret_cast<unsigned long long*>(&val);
+        unsigned long long value_to_store = *reinterpret_cast<const unsigned long long*>(&val);
         unsigned long long ret = atomicExch(dest_address, value_to_store);
         return *reinterpret_cast<T*>(ret);
     } else {

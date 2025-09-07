@@ -41,6 +41,20 @@ void atomic_assign(const nb::capsule& src, nb::capsule& dst) {
     );
 }
 
+#define MINMAX_LAST_DIM_FUNC(op)                                                            \
+void op##_last_dim(const nb::capsule& src, nb::capsule& dst) {                              \
+    const DLManagedTensor* managed_src = static_cast<const DLManagedTensor*>(src.data());   \
+    DLManagedTensor* managed_dst = static_cast<DLManagedTensor*>(dst.data());               \
+    fab::TensorProcessor processor;                                                         \
+    return processor.op##_last_dim(                                                         \
+        managed_src,                                                                        \
+        managed_dst                                                                         \
+    );                                                                                      \
+}
+
+MINMAX_LAST_DIM_FUNC(min)
+MINMAX_LAST_DIM_FUNC(max)
+
 NB_MODULE(fabular, m) {
     m.doc() = "DLPack unified tensor processing with nanobind";
 
@@ -55,6 +69,12 @@ NB_MODULE(fabular, m) {
 
     m.def("atomic_assign", &atomic_assign, 
           "Assign atomic primitives testing API");
+
+    m.def("min_last_dim", &min_last_dim, 
+          "Atomic min over the last dimenstion (for atomic min testing)");
+
+    m.def("max_last_dim", &max_last_dim, 
+          "Atomic max over the last dimenstion (for atomic max testing)");
     
     m.attr("kDLCPU") = nb::int_(static_cast<int>(kDLCPU));
     m.attr("kDLCUDA") = nb::int_(static_cast<int>(kDLCUDA));
