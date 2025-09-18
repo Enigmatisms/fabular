@@ -3,6 +3,7 @@ project(dlpack_unified LANGUAGES CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CUDA_STANDARD 17)
+set(CMAKE_CUDA_ARCHITECTURES "70;80")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 find_package(Python REQUIRED COMPONENTS Development.Module Interpreter)

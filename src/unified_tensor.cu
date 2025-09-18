@@ -6,19 +6,19 @@
 
 namespace fab {
 
-void TensorProcessor::print(const DLManagedTensor* tensor) {
+void TensorProcessor::print(const DLManagedTensor* tensor) const {
     const DLTensor* dlt = &tensor->dl_tensor;
     print_tensor_info(dlt);
     print_first_elements(dlt);
 }
 
-int TensorProcessor::process(const DLManagedTensor* tensor) {
+int TensorProcessor::process(const DLManagedTensor* tensor) const {
     // Currently: a very simple function, just used for testing speed
     const DLTensor* dlt = &tensor->dl_tensor;
     return dlt->ndim;
 }
 
-void TensorProcessor::print_tensor_info(const DLTensor* dlt) {
+void TensorProcessor::print_tensor_info(const DLTensor* dlt) const {
     printf("=== Unified Tensor Info ===\n");
     
     std::string device_str;
@@ -57,7 +57,7 @@ void TensorProcessor::print_tensor_info(const DLTensor* dlt) {
     printf("Data Type: %s%d\n", dtype_str.c_str(), dlt->dtype.bits);
 }
 
-void TensorProcessor::print_elements(void* data, DLDataType dtype, size_t count) {
+void TensorProcessor::print_elements(void* data, DLDataType dtype, size_t count) const {
     for (size_t i = 0; i < count; ++i) {
         char* ptr = static_cast<char*>(data) + i * (dtype.bits / 8);
         if (dtype.code == kDLFloat && dtype.bits == 32) {
@@ -83,7 +83,7 @@ void TensorProcessor::print_elements(void* data, DLDataType dtype, size_t count)
     printf("\n\n");
 }
 
-void TensorProcessor::print_first_elements(const DLTensor* dlt) {
+void TensorProcessor::print_first_elements(const DLTensor* dlt) const {
     size_t num_elements = 1;
     for (int i = 0; i < dlt->ndim; ++i) {
         num_elements *= dlt->shape[i];

@@ -125,11 +125,11 @@ const DLTensor& src = _src->dl_tensor;
     CUDA_CHECK_RETURN(cudaDeviceSynchronize());
 }
 
-void TensorProcessor::min_last_dim(const DLManagedTensor* _src, DLManagedTensor* _dst) {
+void TensorProcessor::min_last_dim(const DLManagedTensor* _src, DLManagedTensor* _dst) const {
     minmax_last_dim<true>(_src, _dst);
 }
 
-void TensorProcessor::max_last_dim(const DLManagedTensor* _src, DLManagedTensor* _dst) {
+void TensorProcessor::max_last_dim(const DLManagedTensor* _src, DLManagedTensor* _dst) const {
     minmax_last_dim<false>(_src, _dst);
 }
 

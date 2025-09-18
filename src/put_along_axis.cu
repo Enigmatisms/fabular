@@ -72,7 +72,7 @@ __global__ void ScatterKernel(
     }
 }
 
-void TensorProcessor::put_along_axis(DLManagedTensor* inout_m, const DLManagedTensor* indices_m, int dim) {
+void TensorProcessor::put_along_axis(DLManagedTensor* inout_m, const DLManagedTensor* indices_m, int dim) const {
     DLTensor& inout = inout_m->dl_tensor;
     const DLTensor& indices = indices_m->dl_tensor;
     if (inout.device.device_type != kDLCUDA ||

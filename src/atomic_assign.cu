@@ -71,7 +71,7 @@ __global__ void TensorAtomicCopy(
     
 }
 
-void TensorProcessor::assign_reduce(const DLManagedTensor* _src, DLManagedTensor* _dst) {
+void TensorProcessor::assign_reduce(const DLManagedTensor* _src, DLManagedTensor* _dst) const {
     const DLTensor& src = _src->dl_tensor;
     DLTensor& inout = _dst->dl_tensor;
     if (src.device.device_type != kDLCUDA ||
