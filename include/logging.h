@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 
-#define DEBUG 3
+#define DEBUG 0
 #if DEBUG > 0
     #define DEBUG_PRINT(fmt, ...) printf("[Debug] " fmt, ##__VA_ARGS__)
     #if DEBUG > 1

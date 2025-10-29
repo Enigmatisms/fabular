@@ -5,7 +5,7 @@ import fabular as fbl
 import torch
 
 if __name__ == "__main__":
-    arr_len = 79872
+    arr_len = 256
     input_tensor = torch.arange(arr_len, dtype=torch.int32).cuda()
     output_tensor = torch.zeros([arr_len * 4], dtype=torch.int32).cuda()
 

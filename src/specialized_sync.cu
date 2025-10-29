@@ -28,7 +28,11 @@ using PPTScheduler = SimpleDynamicScheduler<NT_producer, NT_Consumer>;
 template <int NT_producer, int NT_Consumer>
 using PPTXScheduler = DualPreemptivePersistentTileExecutionScheduler<NT_producer, NT_Consumer>;
 
-static constexpr bool using_pptx = true;
+template <int NT_producer, int NT_Consumer>
+using BPPTScheduler = BwdPreemptivePersistentTileScheduler<NT_producer, NT_Consumer>;
+
+
+static constexpr bool using_pptx = false;
 
 __global__ void SpecializedProducerConsumer(
     const int* const __restrict__ src, 
@@ -56,19 +60,24 @@ __global__ void SpecializedProducerConsumer(
         }
     }
 
-    PPTXScheduler<96, 288> scheduler(num_works, work_cnt_ptr, smem_ptr);
+    BPPTScheduler<128, 256> scheduler(num_works, work_cnt_ptr, smem_ptr);
     __syncthreads();
 
-    if (warp_group_id == 0 && warp_id > 0) {
+    int counter = 0;
+    if (warp_group_id == 0) {
         // producer, with 96 threads
         for (int work_id = scheduler.get_initial_work<true>(); scheduler.is_valid(work_id); work_id = scheduler.get_next_work<true>(work_id)) {
-            scheduler.prefetch_next_work(work_id);
-            if (threadIdx.x == 96) {
-                printf("(%03d/%03d) Current Producer job: %d / %d\n", blockIdx.x, gridDim.x, work_id, array_len);
+            __nanosleep(3000);
+            scheduler.producer_notify();
+            if (threadIdx.x == 0) {
+                printf("(%03d/%03d) Producer Notify: %d, job: %d / %d\n", blockIdx.x, gridDim.x, counter++, work_id, array_len);
             }
+            __nanosleep(3000);
+            scheduler.prefetch_next_work(work_id);
         }
-        if (threadIdx.x == 32)
-            printf("(%03d/%03d) Producer quitted\n", blockIdx.x, gridDim.x);
+        scheduler.producer_notify();
+        if (threadIdx.x == 0)
+            printf("(%03d/%03d) Producer quitted: %d\n", blockIdx.x, gridDim.x, counter);
     } else {
         // consumer, with 288 threads
         scheduler.init_consumer();
@@ -77,12 +86,13 @@ __global__ void SpecializedProducerConsumer(
             for (int i = 0; i < 4; i++) {
                 dst[i + work_id * 4] = src[work_id]; 
             }
+            scheduler.consumer_notify();
             if (threadIdx.x == 128) {
-                printf("(%03d/%03d) Current Consumer job: %d / %d\n", blockIdx.x, gridDim.x, work_id, array_len);
+                printf("(%03d/%03d) Consumer Notify: %d, job: %d / %d\n", blockIdx.x, gridDim.x, counter++, work_id, array_len);
             }
         }
         if (threadIdx.x == 128)
-            printf("(%03d/%03d) Consumer quitted\n", blockIdx.x, gridDim.x);
+            printf("(%03d/%03d) Consumer quitted: %d\n", blockIdx.x, gridDim.x, counter);
     }
 }
 

@@ -7,16 +7,16 @@
 namespace fab {
 
 enum Barrier {
-    SmemEmpty = 0,
-    SmemFull = 1,
-    ProducerSync = 2,
-    SmemEmptyDual = 8,
-    SmemFullDual = 9
+    SmemEmpty = 7,
+    SmemFull = 8,
+    ProducerSync = 9,
+    SmemEmptyDual = 15,
+    SmemFullDual = 16
 };
 
 __device__ __forceinline__
 void named_barrier_sync(uint32_t num_threads, uint32_t barrier_id) {
-    if (threadIdx.x == 96) {
+    if (threadIdx.x == 0) {
         ERROR_PRINT("Producer sync: %d threads, barrier id: %d\n", num_threads, barrier_id);
     } else if (threadIdx.x == 128) {
         ERROR_PRINT("Consumer sync: %d threads, barrier id: %d\n", num_threads, barrier_id);
@@ -197,5 +197,72 @@ public:
             return 0x1 ^ sch_stage_;
     }
 };
+
+
+template<int NumProducerThreads=128, int NumConsumerThreads = 256>
+class BwdPreemptivePersistentTileScheduler {
+    const int num_works;
+    int* const work_cnt_ptr;
+    int* const smem_ptr;
+
+    static constexpr int NumThreads = NumProducerThreads + NumConsumerThreads;
+public:
+    __device__ BwdPreemptivePersistentTileScheduler(
+        const int num_works_,
+        int* const work_cnt_ptr_,
+        int* const smem_ptr_
+    ): num_works(num_works_), work_cnt_ptr(work_cnt_ptr_), smem_ptr(smem_ptr_) { }
+
+    template<bool IsProducerWarp=false>
+    __device__
+    int get_initial_work() const {
+        if constexpr (!IsProducerWarp) {
+            named_barrier_sync(NumThreads, static_cast<uint32_t>(Barrier::SmemFull) /*id*/);
+        }
+        return int(blockIdx.x);
+    }
+
+    __device__ void init_consumer() const {}
+
+    __device__ void prefetch_next_work(int& ) const {}
+
+    __device__ __forceinline__ int is_valid(int work_id) const {
+        return work_id < num_works;
+    }
+
+    __device__
+    void
+    producer_notify() const {     // notify the consumer that we've written data into the buffer
+        named_barrier_arrive(NumThreads, static_cast<uint32_t>(Barrier::SmemFull) /*id*/);
+    }
+
+    __device__
+    void
+    consumer_notify() const {
+        // sync to make sure (*tile_count_smem) modification is visible to consumers
+        named_barrier_arrive(NumThreads, static_cast<uint32_t>(Barrier::SmemEmpty) /*id*/);
+    }
+
+    template<bool IsProducerWarp=false>
+    __device__
+    int get_next_work(int current_work) const {
+        if constexpr (IsProducerWarp) {
+            named_barrier_sync(NumThreads, static_cast<uint32_t>(Barrier::SmemEmpty) /*id*/);
+            if (threadIdx.x == 0) {    // hard-coded, since n_block producer threads are in [32, 128)
+                // the next job we are going to process: number of currently blocks done
+                *smem_ptr = atomicAdd(work_cnt_ptr, 1);
+            }
+            named_barrier_sync(NumProducerThreads, static_cast<uint32_t>(Barrier::ProducerSync) /*id*/);
+        } else {
+            named_barrier_sync(NumThreads, static_cast<uint32_t>(Barrier::SmemFull) /*id*/);
+        }
+        return *smem_ptr;
+    }
+
+    template<bool IsProducerWarp=false>
+    __device__
+    constexpr uint32_t stage() const noexcept { return 0; }
+};
+
 
 }   // end namespace fab
