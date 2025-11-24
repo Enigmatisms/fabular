@@ -10,7 +10,6 @@ find_package(Python REQUIRED COMPONENTS Development.Module Interpreter)
 message(STATUS "Python include dir: ${Python_INCLUDE_DIRS}")
 message(STATUS "Python executable: ${Python_EXECUTABLE}")
 
-
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug"
     OR "${CMAKE_BUILD_TYPE}" STREQUAL "debug"
     OR "${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
@@ -82,6 +81,49 @@ set_target_properties(${MODULE_NAME}_py11 PROPERTIES
     SUFFIX ${MODULE_SUFFIX}
     CUDA_RESOLVE_DEVICE_SYMBOLS ON
 )
+
+find_library(NVSHMEM_LIB 
+    NAMES nvshmem
+    PATHS /usr/lib/x86_64-linux-gnu/
+    NO_DEFAULT_PATH
+)
+
+find_path(NVSHMEM_INCLUDE_DIR
+    NAMES nvshmem.h
+    PATHS /usr/include/nvshmem_11
+    NO_DEFAULT_PATH
+)
+
+find_package(CUDAToolkit REQUIRED)
+find_package(MPI REQUIRED)
+
+if(NVSHMEM_LIB AND NVSHMEM_INCLUDE_DIR)
+    set(NVSHMEM_FOUND TRUE)
+    message(STATUS "Found NVSHMEM library: ${NVSHMEM_LIB}")
+    message(STATUS "Found NVSHMEM include dir: ${NVSHMEM_INCLUDE_DIR}")
+    
+    set(NVSHMEM_LIBRARIES 
+        CUDA::cudart
+        ${NVSHMEM_LIB}
+        MPI::MPI_CXX
+    )
+else()
+    message(FATAL_ERROR "NVSHMEM not found.")
+endif()
+
+file(GLOB PLAYGROUND_SOURCES "playground/*.cu")
+
+foreach(playground_source ${PLAYGROUND_SOURCES})
+    get_filename_component(executable_name ${playground_source} NAME_WE)
+    add_executable(${executable_name} ${playground_source})
+    target_link_libraries(${executable_name} PRIVATE ${NVSHMEM_LIBRARIES})
+    target_include_directories(${executable_name} PRIVATE ${NVSHMEM_INCLUDE_DIR})
+    set_target_properties(${executable_name} PROPERTIES
+        CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}"
+    )
+    
+    message(STATUS "Added NVSHMEM playground executable: ${executable_name}")
+endforeach()
 
 add_custom_target(run_test
     COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test.py
