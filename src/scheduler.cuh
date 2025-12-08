@@ -32,24 +32,29 @@ void named_barrier_arrive(uint32_t num_threads, uint32_t barrier_id) {
     asm volatile("bar.arrive %0, %1;" : : "r"(barrier_id), "r"(num_threads));
 }
 
-template <int NumProducerThreads=96, int NumConsumerThreads=288>
+template <int NumProducerThreads=96, int NumConsumerThreads=288, int Stride=1>
 class SimpleDynamicScheduler {
 private:
     const int num_works;
     int* const work_cnt_ptr;
     int* const smem_ptr;
+    int inner_step;
 
     static constexpr int NumThreads = NumProducerThreads + NumConsumerThreads;
 public:
+    static constexpr int stride = Stride;
     __device__ SimpleDynamicScheduler(
         const int num_works_,
         int* const work_cnt_ptr_,
         int* const smem_ptr_
-    ): num_works(num_works_), work_cnt_ptr(work_cnt_ptr_), smem_ptr(smem_ptr_) { }
+    ): num_works(num_works_), work_cnt_ptr(work_cnt_ptr_), smem_ptr(smem_ptr_), inner_step(0) { }
 
     template <bool IsProducerWarp=false>
-    __device__ int get_initial_work() const {
-        return int(blockIdx.x);
+    __device__ int get_initial_work() {
+        if constexpr (Stride > 1) {
+            inner_step = (inner_step + 1) % Stride;
+        }
+        return int(blockIdx.x) * stride;
     }
 
     __device__ __forceinline__ int is_valid(int work_id) const {
@@ -61,15 +66,26 @@ public:
     }
 
     __device__ void prefetch_next_work(int& current_work_id) {
-        if (threadIdx.x == 96) {
-            current_work_id = atomicAdd(work_cnt_ptr, 1);
+        if (threadIdx.x == 96 && (Stride == 1 || inner_step == 0)) {
+            current_work_id = atomicAdd(work_cnt_ptr, stride);
         }
     }
 
+    __device__
+    constexpr bool skippable() const {
+        return (Stride > 1) && (inner_step == 0); 
+    }
+
     template <bool IsProducerWarp=false>
-    __device__ int get_next_work(int current_work_id) const {
+    __device__ int get_next_work(int current_work_id) {
         // bar.sync: blocking until enough threads arrives at this barrier. Threads arrived directly will add to counter
         // bar.arrive: non-blocking, only increase the counter.
+        if constexpr (Stride > 1) {
+            inner_step = (inner_step + 1) % Stride;
+            if (inner_step == 0) {
+                return current_work_id + 1;
+            }
+        }
         if constexpr (IsProducerWarp) {
             named_barrier_sync(NumThreads, static_cast<uint32_t>(Barrier::SmemEmpty) /*id*/);
             if (threadIdx.x == 96) {    // hard-coded, since n_block producer threads are in [32, 128)
@@ -108,6 +124,7 @@ protected:
     int* const smem_ptr;
     uint32_t sch_stage_;
 public:
+    static constexpr int stride = 1;
     __device__ DualPreemptivePersistentTileExecutionScheduler(
         const int num_works_,
         int* const work_cnt_ptr_,
@@ -150,6 +167,11 @@ public:
 
     __device__ void prefetch_next_work(int& current_work_id) const {
         // PPTX prefetch is moved to consumer for more exact delay scheduling
+    }
+
+    __device__
+    constexpr bool skippable() const {
+        return false; 
     }
 
     template<bool IsProducerWarp=false>
@@ -206,6 +228,7 @@ class BwdPreemptivePersistentTileScheduler {
 
     static constexpr int NumThreads = NumProducerThreads + NumConsumerThreads;
 public:
+    static constexpr int stride = 1;
     __device__ BwdPreemptivePersistentTileScheduler(
         const int num_works_,
         int* const work_cnt_ptr_,
@@ -227,6 +250,11 @@ public:
 
     __device__ __forceinline__ int is_valid(int work_id) const {
         return work_id < num_works;
+    }
+
+    __device__
+    constexpr bool skippable() const {
+        return false; 
     }
 
     __device__
